@@ -3,62 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>엔드필드 숙제 체크리스트</title>
+    <title>엔드필드 숙제 관리자</title>
     <style>
         :root { --main-bg: #121212; --card-bg: #1e1e1e; --accent: #ffcf00; --text: #ffffff; --dim: #888; }
         body { font-family: 'Pretendard', sans-serif; background: var(--main-bg); color: var(--text); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { width: 100%; max-width: 450px; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--accent); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        
+        /* 메인 컨테이너 가로 확장 */
+        .container { width: 100%; max-width: 900px; background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-top: 4px solid var(--accent); }
+        
+        .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 10px; }
         h2 { color: var(--accent); margin: 0; font-size: 1.5rem; }
-        .timer { font-size: 0.9rem; color: #5dade2; font-family: monospace; }
-        .reset-info { font-size: 0.75rem; color: var(--dim); margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .section-title { font-weight: bold; margin-top: 25px; margin-bottom: 12px; color: var(--accent); display: flex; align-items: center; font-size: 1.1rem; }
+        .timer { font-size: 0.9rem; color: #5dade2; font-family: monospace; font-weight: bold; }
+        
+        /* 반응형 그리드 레이아웃 */
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
+        
+        @media (max-width: 768px) {
+            .grid-layout { grid-template-columns: 1fr; gap: 10px; }
+            .container { max-width: 450px; }
+        }
+
+        .section-title { font-weight: bold; margin-top: 20px; margin-bottom: 12px; color: var(--accent); display: flex; align-items: center; font-size: 1.1rem; }
         .section-title::before { content: '■'; font-size: 0.8rem; margin-right: 8px; }
-        .todo-item { display: flex; align-items: center; background: #2a2a2a; margin: 6px 0; padding: 14px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid #333; }
+        
+        .todo-item { display: flex; align-items: center; background: #2a2a2a; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid #333; }
         .todo-item:hover { background: #333; }
-        input[type="checkbox"] { margin-right: 12px; width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
-        .done { opacity: 0.5; }
-        .done span { text-decoration: line-through; color: var(--dim); }
-        .footer-btn { width: 100%; margin-top: 30px; padding: 12px; background: none; color: #ff4444; border: 1px solid #ff4444; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        input[type="checkbox"] { margin-right: 12px; min-width: 20px; min-height: 20px; accent-color: var(--accent); cursor: pointer; }
+        .todo-text { flex: 1; font-size: 0.9rem; line-height: 1.4; word-break: keep-all; }
+        
+        .done { opacity: 0.4; background: #222; }
+        .done .todo-text { text-decoration: line-through; color: var(--dim); }
+        
+        .footer-btn { width: 100%; margin-top: 30px; padding: 12px; background: none; color: #ff4444; border: 1px solid #ff4444; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .footer-btn:hover { background: #ff4444; color: white; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h2>📋 엔드필드 숙제</h2>
-            <div id="countdown" class="timer">초기화까지 00:00:00</div>
+            <h2>📋 ENDFIELD 체크리스트</h2>
+            <div id="countdown" class="timer">Next Reset: 00:00:00</div>
         </div>
-        <div class="reset-info">매일 오전 5시 자동 초기화 (주간: 월요일 5시)</div>
         
-        <div class="section-title">일일 숙제</div>
-        <div id="daily-list"></div>
+        <div class="grid-layout">
+            <div class="left-col">
+                <div class="section-title">일일 숙제</div>
+                <div id="daily-list"></div>
+            </div>
 
-        <div class="section-title">2일 주기 숙제 (격일)</div>
-        <div id="p2day-list"></div>
+            <div class="right-col">
+                <div class="section-title">2일 주기 숙제</div>
+                <div id="p2day-list"></div>
 
-        <div class="section-title">4일 주기 숙제</div>
-        <div id="p4day-list"></div>
+                <div class="section-title">4일 주기 숙제</div>
+                <div id="p4day-list"></div>
 
-        <div class="section-title">주간 숙제 (월요일)</div>
-        <div id="weekly-list"></div>
+                <div class="section-title">주간 숙제</div>
+                <div id="weekly-list"></div>
+            </div>
+        </div>
 
         <button class="footer-btn" onclick="manualReset()">데이터 전체 초기화</button>
     </div>
 
     <script>
-        // 이미지 내용을 바탕으로 한 숙제 목록
         const tasks = {
-            daily: [
-                "운송 의뢰(배달) - 일일 3개 + 내 거 (무릉+4번협곡)",
-                "거점 관리 물건 판매",
-                "일상 퀘스트 & 일상 활약도 100 달성",
-                "변동 수요 물자 판매",
-                "제강호 친구 생산지원 & 정보교류",
-                "오퍼레이터 선물",
-                "이성 빼기",
-                "재활용센터 보상 수령"
-            ],
+            daily: ["운송 의뢰(배달) - 일일 3개 + 개인(무릉/4번협곡)", "거점 관리 물건 판매", "일상 퀘스트 & 일상 활약도 100 달성", "변동 수요 물자 판매", "제강호 친구 생산지원 & 정보교류", "오퍼레이터 선물", "이성 소모", "재활용센터 보상 수령"],
             p2day: ["환경관측 - 무릉 교외 관측 단말기"],
             p4day: ["필드 희귀 채집물 & 희귀 광물 채집"],
             weekly: ["주간 활약도 달성", "주간 보스 토벌", "상점 주간 물자 구매"]
@@ -66,55 +77,52 @@
 
         function getGameDate() {
             const now = new Date();
-            return new Date(now.getTime() - (5 * 60 * 60 * 1000)); 
+            return new Date(now.getTime() - (5 * 60 * 60 * 1000));
         }
 
         function checkAutoReset() {
-            try {
-                const lastReset = JSON.parse(localStorage.getItem('endfield_reset') || '{}');
-                const nowGameDate = getGameDate();
-                const todayStr = nowGameDate.toISOString().split('T')[0];
-                const dayOfWeek = nowGameDate.getDay(); 
-                const baseDate = new Date('2024-01-01');
-                const totalDays = Math.floor((nowGameDate - baseDate) / (1000 * 60 * 60 * 24));
+            const lastReset = JSON.parse(localStorage.getItem('ef_reset_v2') || '{}');
+            const nowGameDate = getGameDate();
+            const todayStr = nowGameDate.toISOString().split('T')[0];
+            const dayOfWeek = nowGameDate.getDay(); 
+            const baseDate = new Date('2024-01-01');
+            const totalDays = Math.floor((nowGameDate - baseDate) / (1000 * 60 * 60 * 24));
 
-                let changed = false;
-                if (lastReset.daily !== todayStr) { resetSection('daily'); lastReset.daily = todayStr; changed = true; }
-                if (dayOfWeek === 1 && lastReset.weekly !== todayStr) { resetSection('weekly'); lastReset.weekly = todayStr; changed = true; }
-                if (totalDays % 2 === 0 && lastReset.p2day !== todayStr) { resetSection('p2day'); lastReset.p2day = todayStr; changed = true; }
-                if (totalDays % 4 === 0 && lastReset.p4day !== todayStr) { resetSection('p4day'); lastReset.p4day = todayStr; changed = true; }
+            let needsUpdate = false;
+            if (lastReset.daily !== todayStr) { resetStorage('daily'); lastReset.daily = todayStr; needsUpdate = true; }
+            if (dayOfWeek === 1 && lastReset.weekly !== todayStr) { resetStorage('weekly'); lastReset.weekly = todayStr; needsUpdate = true; }
+            if (totalDays % 2 === 0 && lastReset.p2day !== todayStr) { resetStorage('p2day'); lastReset.p2day = todayStr; needsUpdate = true; }
+            if (totalDays % 4 === 0 && lastReset.p4day !== todayStr) { resetStorage('p4day'); lastReset.p4day = todayStr; needsUpdate = true; }
 
-                if (changed) localStorage.setItem('endfield_reset', JSON.stringify(lastReset));
-            } catch(e) { console.error("Reset logic error", e); }
+            if (needsUpdate) localStorage.setItem('ef_reset_v2', JSON.stringify(lastReset));
         }
 
-        function resetSection(prefix) {
+        function resetStorage(prefix) {
             Object.keys(localStorage).forEach(key => {
-                if (key.startsWith('ef-' + prefix)) localStorage.removeItem(key);
+                if (key.startsWith('efitem-' + prefix)) localStorage.removeItem(key);
             });
         }
 
-        function render() {
-            const renderSection = (prefix, targetId) => {
+        function renderAll() {
+            const draw = (prefix, targetId) => {
                 const el = document.getElementById(targetId);
-                if(!el) return;
                 el.innerHTML = tasks[prefix].map((task, i) => {
-                    const id = `ef-${prefix}-${i}`;
+                    const id = `efitem-${prefix}-${i}`;
                     const checked = localStorage.getItem(id) === 'true';
                     return `
                         <label class="todo-item ${checked ? 'done' : ''}">
-                            <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="toggle('${id}')">
-                            <span>${task}</span>
+                            <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="toggleTask('${id}')">
+                            <span class="todo-text">${task}</span>
                         </label>`;
                 }).join('');
             };
-            renderSection('daily', 'daily-list');
-            renderSection('p2day', 'p2day-list');
-            renderSection('p4day', 'p4day-list');
-            renderSection('weekly', 'weekly-list');
+            draw('daily', 'daily-list');
+            draw('p2day', 'p2day-list');
+            draw('p4day', 'p4day-list');
+            draw('weekly', 'weekly-list');
         }
 
-        function toggle(id) {
+        function toggleTask(id) {
             const cb = document.getElementById(id);
             localStorage.setItem(id, cb.checked);
             cb.parentElement.classList.toggle('done', cb.checked);
@@ -122,24 +130,22 @@
 
         function updateTimer() {
             const now = new Date();
-            const nextReset = new Date();
-            if (now.getHours() >= 5) nextReset.setDate(now.getDate() + 1);
-            nextReset.setHours(5, 0, 0, 0);
-            
-            const diff = nextReset - now;
+            const next = new Date();
+            if (now.getHours() >= 5) next.setDate(now.getDate() + 1);
+            next.setHours(5, 0, 0, 0);
+            const diff = next - now;
             const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
             const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
             const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
-            document.getElementById('countdown').innerText = `초기화까지 ${h}:${m}:${s}`;
+            document.getElementById('countdown').innerText = `Next Reset: ${h}:${m}:${s}`;
         }
 
         function manualReset() {
-            if(confirm("모든 기록을 초기화할까요?")) { localStorage.clear(); location.reload(); }
+            if(confirm("모든 기록을 삭제할까요?")) { localStorage.clear(); location.reload(); }
         }
 
-        // 초기화 및 실행
         checkAutoReset();
-        render();
+        renderAll();
         setInterval(updateTimer, 1000);
         updateTimer();
     </script>
