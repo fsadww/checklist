@@ -58,3 +58,90 @@
                 "오퍼레이터 선물",
                 "이성 빼기",
                 "재활용센터 보상 수령"
+            ],
+            p2day: ["환경관측 - 무릉 교외 관측 단말기"],
+            p4day: ["필드 희귀 채집물 & 희귀 광물 채집"],
+            weekly: ["주간 활약도 달성", "주간 보스 토벌", "상점 주간 물자 구매"]
+        };
+
+        function getGameDate() {
+            const now = new Date();
+            return new Date(now.getTime() - (5 * 60 * 60 * 1000)); 
+        }
+
+        function checkAutoReset() {
+            try {
+                const lastReset = JSON.parse(localStorage.getItem('endfield_reset') || '{}');
+                const nowGameDate = getGameDate();
+                const todayStr = nowGameDate.toISOString().split('T')[0];
+                const dayOfWeek = nowGameDate.getDay(); 
+                const baseDate = new Date('2024-01-01');
+                const totalDays = Math.floor((nowGameDate - baseDate) / (1000 * 60 * 60 * 24));
+
+                let changed = false;
+                if (lastReset.daily !== todayStr) { resetSection('daily'); lastReset.daily = todayStr; changed = true; }
+                if (dayOfWeek === 1 && lastReset.weekly !== todayStr) { resetSection('weekly'); lastReset.weekly = todayStr; changed = true; }
+                if (totalDays % 2 === 0 && lastReset.p2day !== todayStr) { resetSection('p2day'); lastReset.p2day = todayStr; changed = true; }
+                if (totalDays % 4 === 0 && lastReset.p4day !== todayStr) { resetSection('p4day'); lastReset.p4day = todayStr; changed = true; }
+
+                if (changed) localStorage.setItem('endfield_reset', JSON.stringify(lastReset));
+            } catch(e) { console.error("Reset logic error", e); }
+        }
+
+        function resetSection(prefix) {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('ef-' + prefix)) localStorage.removeItem(key);
+            });
+        }
+
+        function render() {
+            const renderSection = (prefix, targetId) => {
+                const el = document.getElementById(targetId);
+                if(!el) return;
+                el.innerHTML = tasks[prefix].map((task, i) => {
+                    const id = `ef-${prefix}-${i}`;
+                    const checked = localStorage.getItem(id) === 'true';
+                    return `
+                        <label class="todo-item ${checked ? 'done' : ''}">
+                            <input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="toggle('${id}')">
+                            <span>${task}</span>
+                        </label>`;
+                }).join('');
+            };
+            renderSection('daily', 'daily-list');
+            renderSection('p2day', 'p2day-list');
+            renderSection('p4day', 'p4day-list');
+            renderSection('weekly', 'weekly-list');
+        }
+
+        function toggle(id) {
+            const cb = document.getElementById(id);
+            localStorage.setItem(id, cb.checked);
+            cb.parentElement.classList.toggle('done', cb.checked);
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const nextReset = new Date();
+            if (now.getHours() >= 5) nextReset.setDate(now.getDate() + 1);
+            nextReset.setHours(5, 0, 0, 0);
+            
+            const diff = nextReset - now;
+            const h = String(Math.floor(diff / 3600000)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+            const s = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+            document.getElementById('countdown').innerText = `초기화까지 ${h}:${m}:${s}`;
+        }
+
+        function manualReset() {
+            if(confirm("모든 기록을 초기화할까요?")) { localStorage.clear(); location.reload(); }
+        }
+
+        // 초기화 및 실행
+        checkAutoReset();
+        render();
+        setInterval(updateTimer, 1000);
+        updateTimer();
+    </script>
+</body>
+</html>
